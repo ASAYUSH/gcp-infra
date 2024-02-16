@@ -1,14 +1,14 @@
 
-resource "google_compute_instance" "default" {
-  name         = "my-instance"
-  machine_type = "n2-standard-2"
-  zone         = "us-central1-a"
+resource "google_compute_instance" "jenkins" {
+  name         = "jenkins-machine"
+  machine_type = "e2-highcpu-8"
+  zone         = "asia-south1-c"
 
-  tags = ["foo", "bar"]
+  tags = ["name", "jenkins-machine", "allow-http"]
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = "Ubuntu/Ubuntu 20.04 LTS"
       labels = {
         my_label = "value"
       }
@@ -29,8 +29,25 @@ resource "google_compute_instance" "default" {
   }
 
   metadata = {
-    foo = "bar"
+    user-data = file("../../config/jenkins.sh")
   }
 
   metadata_startup_script = "echo hi > /test.txt"
+}
+
+#######################
+# Network Access Rule
+#######################
+
+resource "google_compute_firewall" "allow_http" {
+  name    = "allow-http"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["8080"]
+  }
+
+  source_ranges = ["0.0.0.0/0"] // Adjust the source range as needed
+  target_tags   = ["allow-http"]
 }
